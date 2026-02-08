@@ -43,33 +43,33 @@ if 'default_days' not in st.session_state:
 def sidebar_inputs():
     """Sidebar for API credentials and settings."""
     with st.sidebar:
-        st.title("Octopus Energy Dashboard")
+        st.title("Octopus EnerAgile Dashboard")
         
         # API Status section
         st.header("Connection Status")
         
         if st.session_state.api_key:
-            st.success("Connected to Octopus Energy API")
+            st.success("Connected to Octopus Agile API")
         else:
             st.error("API Key not configured")
         
         # Navigation
         st.header("Navigation")
-        page = st.radio("Select Page", ["Rates", "Usage"])
+        page = st.radio("Select Page", ["Rates", "DA5_1LW_Usage"])
         
         # Only show meter inputs if on Usage page
-        if page == "Usage":
+        if page == "DA5_1LW_Usage":
             #st.header("Meter Information")
             
             # Display current meter info
-            #st.info(f"MPAN: {st.session_state.mpan}")
-            #st.info(f"Meter Serial: {st.session_state.meter_serial}")
+            st.info(f"MPAN: {st.session_state.mpan}")
+            st.info(f"Meter Serial: {st.session_state.meter_serial}")
             
             # Allow editing standing charge
             standing_charge = st.number_input(
                 "Standing Charge (£/day)",
                 value=st.session_state.standing_charge,
-                step=0.01,
+                step=0.00,
                 format="%.2f",
                 help="Daily standing charge in pounds"
             )
@@ -150,7 +150,7 @@ def rates_page():
         )
         
         # Legend for the table and chart
-        col1, col2, col3 = st.columns(3)
+        col1 = st.columns(1)
         with col1:
             st.markdown("🟢 **Daytime (00:01-23:59)**")
         #with col2:
