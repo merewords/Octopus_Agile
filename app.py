@@ -185,13 +185,22 @@ def rates_page():
                     return ['background-color: rgba(144, 238, 144, 0.3); font-weight: bold'] * len(row)
                 return [''] * len(row)
 
+            styled_df = (
+                display_df.style
+                .apply(highlight_cheapest, axis=1)
+                .set_properties(subset=['Pick #'], **{'white-space': 'nowrap', 'width': '1%'})
+                .set_table_styles([
+                    {'selector': 'th.col0', 'props': [('white-space', 'nowrap'), ('width', '1%')]}
+                ])
+            )
+
             # Display as table
             st.dataframe(
-                display_df.style.apply(highlight_cheapest, axis=1),
+                styled_df,
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "Pick #": st.column_config.TextColumn(width="small")
+                    "Pick #": st.column_config.TextColumn("Pick #", width="small")
                 }
             )
         else:
