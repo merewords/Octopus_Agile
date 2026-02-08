@@ -13,7 +13,7 @@ class OctopusEnergyAPI:
         self.api_key = api_key
         self.auth = (api_key, "") if api_key else None
     
-    def get_agile_tariff_rates(self, tariff_code="E-1R-AGILE-24-10-01-G", product_code="AGILE-24-10-01", 
+    def get_agile_tariff_rates(self, tariff_code="E-1R-AGILE-24-10-01-C", product_code="AGILE-24-10-01", 
                              period_from=None, period_to=None):
         """
         Fetch Agile tariff rates for a specified period.
