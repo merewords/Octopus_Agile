@@ -86,9 +86,9 @@ def create_rates_chart(tariff_df):
     tomorrow_rates = tariff_df[tariff_df['date'] == tomorrow].copy()
     
     # Define time periods for highlighting cheapest slots
-    day_start = 8  # 8:00 AM
-    evening_start = 18  # 6:00 PM
-    night_start = 0  # 12:00 AM
+    day_start = 10  # 0:01 AM
+    evening_start = 0  # 23:58 PM
+    #night_start = 0  # 12:00 AM
     
     # Initialize cheapest_slots DataFrame
     cheapest_slots = pd.DataFrame()
@@ -104,24 +104,25 @@ def create_rates_chart(tariff_df):
         
         # Create masks for each time period
         daytime_mask = (today_rates['hour'] >= day_start) & (today_rates['hour'] < evening_start)
-        evening_mask = (today_rates['hour'] >= evening_start) & (today_rates['hour'] < 24)
-        night_mask = (today_rates['hour'] >= night_start) & (today_rates['hour'] < day_start)
+        #evening_mask = (today_rates['hour'] >= evening_start) & (today_rates['hour'] < 24)
+        #night_mask = (today_rates['hour'] >= night_start) & (today_rates['hour'] < day_start)
         
         # Get cheapest slots for each period (3 each)
         daytime_cheapest = today_rates[daytime_mask].nsmallest(3, 'value_inc_vat').copy()
-        evening_cheapest = today_rates[evening_mask].nsmallest(3, 'value_inc_vat').copy()
-        night_cheapest = today_rates[night_mask].nsmallest(3, 'value_inc_vat').copy()
+        #evening_cheapest = today_rates[evening_mask].nsmallest(3, 'value_inc_vat').copy()
+        #night_cheapest = today_rates[night_mask].nsmallest(3, 'value_inc_vat').copy()
         
         # Add period information to each set
         if not daytime_cheapest.empty:
             daytime_cheapest['period'] = 'Daytime (8am-6pm)'
-        if not evening_cheapest.empty:
-            evening_cheapest['period'] = 'Evening (6pm-12am)'
-        if not night_cheapest.empty:
-            night_cheapest['period'] = 'Night (12am-8am)'
+        #if not evening_cheapest.empty:
+        #   evening_cheapest['period'] = 'Evening (6pm-12am)'
+        #if not night_cheapest.empty:
+        #    night_cheapest['period'] = 'Night (12am-8am)'
         
         # Combine all cheapest slots
-        cheapest_slots = pd.concat([daytime_cheapest, evening_cheapest, night_cheapest])
+        #cheapest_slots = pd.concat([daytime_cheapest, evening_cheapest, night_cheapest])
+        cheapest_slots = pd.concat([daytime_cheapest])
     
     # Create marker colors based on time periods
     marker_colors = []
