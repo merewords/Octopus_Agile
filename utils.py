@@ -85,11 +85,6 @@ def create_rates_chart(tariff_df):
     today_rates = tariff_df[tariff_df['date'] == today].copy()
     tomorrow_rates = tariff_df[tariff_df['date'] == tomorrow].copy()
     
-    # Define time periods for highlighting cheapest slots
-    day_start = 8
-    evening_start = 18
-    night_start = 0
-    
     # Initialize cheapest_slots DataFrame
     cheapest_slots = pd.DataFrame()
     
@@ -98,29 +93,29 @@ def create_rates_chart(tariff_df):
         # Define the valid time window (00:01 to 23:59)
         min_minutes = 1
         max_minutes = 23 * 60 + 59
-        
+
         # Print the timezone information for debugging
         print(f"Using timezone: {today_rates['valid_from'].iloc[0].tzinfo}")
-        
-        # Get the 10 cheapest slots overall for today
-        cheapest_slots = today_rates.nsmallest(10, 'value_inc_vat').copy()
 
-        # Add period information to each slot
-        def classify_period(hour):
-            if day_start <= hour < evening_start:
-                return 'Daytime (8am-6pm)'
-            if evening_start <= hour < 24:
-                return 'Evening (6pm-12am)'
-            return 'Night (12am-8am)'
+        # Build a single mask and get the 10 cheapest slots overall for today
+        today_rates['minute_of_day'] = (
+            today_rates['valid_from'].dt.hour * 60 + today_rates['valid_from'].dt.minute
+        )
+        valid_mask = (today_rates['minute_of_day'] >= min_minutes) & (
+            today_rates['minute_of_day'] <= max_minutes
+        )
 
-        cheapest_slots['period'] = cheapest_slots['hour'].apply(classify_period)
+        cheapest_slots = today_rates[valid_mask].nsmallest(10, 'value_inc_vat').copy()
+        cheapest_slots['period'] = 'All day (00:01-23:59)'
     
     # Create marker colors based on time periods
     marker_colors = []
     if not today_rates.empty:
         for _, row in today_rates.iterrows():
             if row['valid_from'] in cheapest_slots['valid_from'].values:
-            cheapest_slots['period'] = 'All day (00:01-23:59)'
+                marker_colors.append('green')
+            else:
+                marker_colors.append('blue')
     
     fig = go.Figure()
     
