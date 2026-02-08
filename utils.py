@@ -88,7 +88,7 @@ def create_rates_chart(tariff_df):
     # Define time periods for highlighting cheapest slots
     day_start = 10  # 0:01 AM
     evening_start = 0  # 23:58 PM
-    #night_start = 0  # 12:00 AM
+    night_start = 0  # 23:59 PM
     
     # Initialize cheapest_slots DataFrame
     cheapest_slots = pd.DataFrame()
@@ -104,13 +104,13 @@ def create_rates_chart(tariff_df):
         
         # Create masks for each time period
         daytime_mask = (today_rates['hour'] >= day_start) & (today_rates['hour'] < evening_start)
-        #evening_mask = (today_rates['hour'] >= evening_start) & (today_rates['hour'] < 24)
-        #night_mask = (today_rates['hour'] >= night_start) & (today_rates['hour'] < day_start)
+        evening_mask = (today_rates['hour'] >= evening_start) & (today_rates['hour'] < 24)
+        night_mask = (today_rates['hour'] >= night_start) & (today_rates['hour'] < day_start)
         
-        # Get cheapest slots for each period (3 each)
-        daytime_cheapest = today_rates[daytime_mask].nsmallest(3, 'value_inc_vat').copy()
-        #evening_cheapest = today_rates[evening_mask].nsmallest(3, 'value_inc_vat').copy()
-        #night_cheapest = today_rates[night_mask].nsmallest(3, 'value_inc_vat').copy()
+        # Get cheapest slots for each period (10 each)
+        daytime_cheapest = today_rates[daytime_mask].nsmallest(10, 'value_inc_vat').copy()
+        evening_cheapest = today_rates[evening_mask].nsmallest(0, 'value_inc_vat').copy()
+        night_cheapest = today_rates[night_mask].nsmallest(0, 'value_inc_vat').copy()
         
         # Add period information to each set
         if not daytime_cheapest.empty:
