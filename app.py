@@ -137,10 +137,10 @@ def rates_page():
         def highlight_period(row):
             if 'Daytime' in row['Period']:
                 return ['background-color: rgba(0, 128, 0, 0.2)'] * len(row)
-            #elif 'Evening' in row['Period']:
-            #    return ['background-color: rgba(255, 165, 0, 0.2)'] * len(row)
-            #elif 'Night' in row['Period']:
-            #    return ['background-color: rgba(128, 0, 128, 0.2)'] * len(row)
+            elif 'Evening' in row['Period']:
+                return ['background-color: rgba(255, 165, 0, 0.2)'] * len(row)
+            elif 'Night' in row['Period']:
+                return ['background-color: rgba(128, 0, 128, 0.2)'] * len(row)
             return [''] * len(row)
         
         # Display the styled table
