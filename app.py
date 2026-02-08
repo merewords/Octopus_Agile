@@ -135,12 +135,8 @@ def rates_page():
         
         # Use different colors for each period
         def highlight_period(row):
-            if 'Daytime' in row['Period']:
+            if 'All day' in row['Period']:
                 return ['background-color: rgba(0, 128, 0, 0.2)'] * len(row)
-            elif 'Evening' in row['Period']:
-                return ['background-color: rgba(255, 165, 0, 0.2)'] * len(row)
-            elif 'Night' in row['Period']:
-                return ['background-color: rgba(128, 0, 128, 0.2)'] * len(row)
             return [''] * len(row)
         
         # Display the styled table
@@ -152,11 +148,7 @@ def rates_page():
         # Legend for the table and chart
         col1 = st.columns(1)
         with col1:
-            st.markdown("🟢 **Daytime (00:01-23:59)**")
-        with col2:
-            st.markdown("🟠 **Evening (6pm-12am)**")
-        with col3:
-            st.markdown("🟣 **Night (12am-8am)**")
+            st.markdown("🟢 **All day (00:01-23:59)**")
     
     # Display the chart
     st.plotly_chart(fig, use_container_width=True)
