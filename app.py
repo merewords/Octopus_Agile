@@ -122,7 +122,7 @@ def rates_page():
     
     # Display the cheapest slots table first
     if not cheapest_slots.empty:
-        st.subheader("9 Cheapest Half-Hour Slots Today")
+        st.subheader("10 Cheapest Half-Hour Slots Today")
         
         # Format the cheapest slots for display
         display_cheapest = cheapest_slots.copy()
@@ -137,10 +137,10 @@ def rates_page():
         def highlight_period(row):
             if 'Daytime' in row['Period']:
                 return ['background-color: rgba(0, 128, 0, 0.2)'] * len(row)
-            elif 'Evening' in row['Period']:
-                return ['background-color: rgba(255, 165, 0, 0.2)'] * len(row)
-            elif 'Night' in row['Period']:
-                return ['background-color: rgba(128, 0, 128, 0.2)'] * len(row)
+            #elif 'Evening' in row['Period']:
+            #    return ['background-color: rgba(255, 165, 0, 0.2)'] * len(row)
+            #elif 'Night' in row['Period']:
+            #    return ['background-color: rgba(128, 0, 128, 0.2)'] * len(row)
             return [''] * len(row)
         
         # Display the styled table
@@ -152,11 +152,11 @@ def rates_page():
         # Legend for the table and chart
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown("🟢 **Daytime (8am-6pm)**")
-        with col2:
-            st.markdown("🟠 **Evening (6pm-12am)**")
-        with col3:
-            st.markdown("🟣 **Night (12am-8am)**")
+            st.markdown("🟢 **Daytime (00:01-23:59)**")
+        #with col2:
+        #    st.markdown("🟠 **Evening (6pm-12am)**")
+        #with col3:
+        #    st.markdown("🟣 **Night (12am-8am)**")
     
     # Display the chart
     st.plotly_chart(fig, use_container_width=True)
