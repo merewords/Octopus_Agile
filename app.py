@@ -163,19 +163,25 @@ def rates_page():
         
         if not today_rates.empty:
             cheapest_times = set(cheapest_slots['valid_from']) if not cheapest_slots.empty else set()
+            cheapest_rank = {}
+            if not cheapest_slots.empty:
+                sorted_cheapest = cheapest_slots.sort_values(by='value_inc_vat').reset_index(drop=True)
+                for idx, row in sorted_cheapest.iterrows():
+                    cheapest_rank[row['valid_from']] = f"{idx + 1}/10"
 
             # Format for display
             today_rates['Time'] = today_rates['valid_from'].dt.strftime('%H:%M')
             today_rates['Rate (p/kWh)'] = today_rates['value_inc_vat'].round(2)
-            today_rates['⭐'] = today_rates['valid_from'].isin(cheapest_times).map(
+            today_rates['Pick #'] = today_rates['valid_from'].map(cheapest_rank).fillna('')
+            today_rates['Picked Cheapest'] = today_rates['valid_from'].isin(cheapest_times).map(
                 lambda is_cheapest: '⭐' if is_cheapest else ''
             )
             
             # Select and rename columns for display
-            display_df = today_rates[['⭐', 'Time', 'Rate (p/kWh)']].reset_index(drop=True)
+            display_df = today_rates[['Pick #', 'Picked Cheapest', 'Time', 'Rate (p/kWh)']].reset_index(drop=True)
 
             def highlight_cheapest(row):
-                if row['⭐'] == '⭐':
+                if row['Picked Cheapest'] == '⭐':
                     return ['background-color: rgba(144, 238, 144, 0.3); font-weight: bold'] * len(row)
                 return [''] * len(row)
 
