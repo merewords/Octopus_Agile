@@ -115,14 +115,14 @@ def create_rates_chart(tariff_df):
         # Add period information to each set
         if not daytime_cheapest.empty:
             daytime_cheapest['period'] = 'Daytime (8am-6pm)'
-        #if not evening_cheapest.empty:
-        #   evening_cheapest['period'] = 'Evening (6pm-12am)'
-        #if not night_cheapest.empty:
-        #    night_cheapest['period'] = 'Night (12am-8am)'
+        if not evening_cheapest.empty:
+            evening_cheapest['period'] = 'Evening (6pm-12am)'
+        if not night_cheapest.empty:
+            night_cheapest['period'] = 'Night (12am-8am)'
         
         # Combine all cheapest slots
-        #cheapest_slots = pd.concat([daytime_cheapest, evening_cheapest, night_cheapest])
-        cheapest_slots = pd.concat([daytime_cheapest])
+        cheapest_slots = pd.concat([daytime_cheapest, evening_cheapest, night_cheapest])
+        #cheapest_slots = pd.concat([daytime_cheapest])
     
     # Create marker colors based on time periods
     marker_colors = []
