@@ -162,12 +162,17 @@ def rates_page():
         today_rates = tariff_df[tariff_df['date'] == today].copy()
         
         if not today_rates.empty:
+            cheapest_times = set(cheapest_slots['valid_from']) if not cheapest_slots.empty else set()
+
             # Format for display
             today_rates['Time'] = today_rates['valid_from'].dt.strftime('%H:%M')
             today_rates['Rate (p/kWh)'] = today_rates['value_inc_vat'].round(2)
+            today_rates['⭐'] = today_rates['valid_from'].isin(cheapest_times).map(
+                lambda is_cheapest: '⭐' if is_cheapest else ''
+            )
             
             # Select and rename columns for display
-            display_df = today_rates[['Time', 'Rate (p/kWh)']].reset_index(drop=True)
+            display_df = today_rates[['⭐', 'Time', 'Rate (p/kWh)']].reset_index(drop=True)
             
             # Display as table
             st.dataframe(display_df, use_container_width=True)
