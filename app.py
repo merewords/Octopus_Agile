@@ -153,10 +153,10 @@ def rates_page():
         col1 = st.columns(1)
         with col1:
             st.markdown("🟢 **Daytime (00:01-23:59)**")
-        #with col2:
-        #    st.markdown("🟠 **Evening (6pm-12am)**")
-        #with col3:
-        #    st.markdown("🟣 **Night (12am-8am)**")
+        with col2:
+            st.markdown("🟠 **Evening (6pm-12am)**")
+        with col3:
+            st.markdown("🟣 **Night (12am-8am)**")
     
     # Display the chart
     st.plotly_chart(fig, use_container_width=True)
