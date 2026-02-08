@@ -188,7 +188,11 @@ def rates_page():
             # Display as table
             st.dataframe(
                 display_df.style.apply(highlight_cheapest, axis=1),
-                use_container_width=True
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Pick #": st.column_config.TextColumn(width="small")
+                }
             )
         else:
             st.info("No rates available for today.")
