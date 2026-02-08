@@ -173,9 +173,17 @@ def rates_page():
             
             # Select and rename columns for display
             display_df = today_rates[['⭐', 'Time', 'Rate (p/kWh)']].reset_index(drop=True)
-            
+
+            def highlight_cheapest(row):
+                if row['⭐'] == '⭐':
+                    return ['background-color: rgba(144, 238, 144, 0.3); font-weight: bold'] * len(row)
+                return [''] * len(row)
+
             # Display as table
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(
+                display_df.style.apply(highlight_cheapest, axis=1),
+                use_container_width=True
+            )
         else:
             st.info("No rates available for today.")
     
