@@ -146,7 +146,7 @@ def rates_page():
         )
         
         # Legend for the table and chart
-        col1 = st.columns(1)
+        col1, = st.columns(1)
         with col1:
             st.markdown("🟢 **All day (00:01-23:59)**")
     
