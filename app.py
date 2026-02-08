@@ -33,7 +33,7 @@ if 'mpan' not in st.session_state:
 if 'meter_serial' not in st.session_state:
     st.session_state.meter_serial = meter_key  # Default from screenshot
 if 'standing_charge' not in st.session_state:
-    st.session_state.standing_charge = 0.5
+    st.session_state.standing_charge = 0.3954
 if 'active_page' not in st.session_state:
     st.session_state.active_page = "Rates"
 if 'default_days' not in st.session_state:
