@@ -82,4 +82,3 @@ stages:
                     azureSubscription: $(azureServiceConnectionName)
                     appName: $(webAppName)
                     package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
-                    startUpCommand: 'startup.sh'

@@ -77,15 +77,22 @@ The pipeline will automatically:
 - ✅ Build the application
 - ✅ Deploy to Azure Web App
 
-#### Step 4: Configure Application Settings
+#### Step 4: Configure Web App Settings
 
-After deployment, add your API credentials:
+After deployment, configure the startup command and API credentials:
 
 **Via Azure Portal:**
 
 1. Navigate to your Web App: `octopus-agile`
-2. Go to **Configuration** → **Application settings**
-3. Click **+ New application setting** for each:
+
+2. **Set Startup Command**:
+   - Go to **Configuration** → **General settings**
+   - Set **Startup Command**: `startup.sh`
+   - Click **Save**
+
+3. **Add Application Settings**:
+   - Go to **Configuration** → **Application settings**
+   - Click **+ New application setting** for each:
 
 ```
 OCTOPUS_API_KEY = your-octopus-api-key
@@ -101,6 +108,13 @@ WEBSITES_PORT = 8000
 **Via Azure CLI:**
 
 ```bash
+# Set startup command
+az webapp config set \
+  --resource-group octopus-agile-rg \
+  --name octopus-agile \
+  --startup-file "startup.sh"
+
+# Add application settings
 az webapp config appsettings set \
   --resource-group octopus-agile-rg \
   --name octopus-agile \
@@ -194,11 +208,13 @@ The pipeline (`azure-pipelines.yml`) performs:
 ### Deploy Stage:
 1. Downloads build artifact
 2. Deploys to Azure Web App
-3. Runs `startup.sh` on container start
+3. Azure Web App runs `startup.sh` on container start (configured in Web App settings)
 
 ### Triggered by:
 - Commits to `main` branch
 - Commits to `feature/gas-usage` branch
+
+**Note**: The startup command must be configured in the Azure Web App settings (Configuration → General settings → Startup Command = `startup.sh`)
 
 ---
 
