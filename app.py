@@ -20,6 +20,18 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+st.markdown(
+    """
+    <style>
+    div[data-testid="stDataFrame"] table td,
+    div[data-testid="stDataFrame"] table th {
+        text-align: center !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Get API key from environment variable
 api_key = os.environ.get('OCTOPUS_API_KEY', '')
 MPAN_key = os.environ.get('MPAN_KEY', '')
