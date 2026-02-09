@@ -147,7 +147,12 @@ def rates_page():
         
         # Display the styled table
         st.dataframe(
-            display_cheapest.style.apply(highlight_period, axis=1),
+            display_cheapest.style
+            .apply(highlight_period, axis=1)
+            .set_properties(**{'text-align': 'center'})
+            .set_table_styles([
+                {'selector': 'th', 'props': [('text-align', 'center')]}
+            ]),
             use_container_width=True,
             hide_index=True,
             column_config={
@@ -210,8 +215,10 @@ def rates_page():
                 display_df.style
                 .apply(highlight_cheapest, axis=1)
                 .set_properties(subset=['Slot #'], **{'white-space': 'nowrap', 'width': '1%'})
+                .set_properties(**{'text-align': 'center'})
                 .set_table_styles([
-                    {'selector': 'th.col0', 'props': [('white-space', 'nowrap'), ('width', '1%')]}
+                    {'selector': 'th.col0', 'props': [('white-space', 'nowrap'), ('width', '1%')]},
+                    {'selector': 'th', 'props': [('text-align', 'center')]}
                 ])
             )
 
@@ -242,7 +249,14 @@ def rates_page():
             display_df = tomorrow_rates[['Time', 'Rate (p/kWh)']].reset_index(drop=True)
             
             # Display as table
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(
+                display_df.style
+                .set_properties(**{'text-align': 'center'})
+                .set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center')]}
+                ]),
+                use_container_width=True
+            )
         else:
             st.info("Rates for tomorrow are not yet available.")
 
