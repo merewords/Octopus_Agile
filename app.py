@@ -337,7 +337,7 @@ def usage_page():
     
     # Display summary statistics
     if not cost_df.empty:
-        st.subheader("Usage Summary")
+        st.subheader("Monthly Usage Summary")
         
         total_consumption = consumption_df['consumption'].sum()
         total_cost = cost_df['cost'].sum()
