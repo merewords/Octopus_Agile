@@ -77,7 +77,7 @@ stages:
                   displayName: Use Python version
 
                 - task: AzureWebApp@1
-                  displayName: Deploy Azure Web App: octopus-agile
+                  displayName: 'Deploy Azure Web App: octopus-agile'
                   inputs:
                     azureSubscription: $(azureServiceConnectionName)
                     appName: $(webAppName)
