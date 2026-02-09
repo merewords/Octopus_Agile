@@ -128,7 +128,7 @@ def rates_page():
         display_cheapest = cheapest_slots.copy()
         display_cheapest['Time'] = display_cheapest['time']
         display_cheapest['Period'] = display_cheapest['period']
-        display_cheapest['Rate (p/kWh)'] = display_cheapest['value_inc_vat'].round(2)
+        display_cheapest['Rate (p/kWh)'] = display_cheapest['value_inc_vat'].map(lambda x: f"{x:.2f}")
         # Map half-hour slots to 1-48 daily positions (00:00 is 1, 00:30 is 2, ...)
         display_cheapest['Slot #'] = (
             display_cheapest['valid_from'].dt.hour * 2
@@ -181,7 +181,7 @@ def rates_page():
 
             # Format for display
             today_rates['Time'] = today_rates['valid_from'].dt.strftime('%H:%M')
-            today_rates['Rate (p/kWh)'] = today_rates['value_inc_vat'].round(2)
+            today_rates['Rate (p/kWh)'] = today_rates['value_inc_vat'].map(lambda x: f"{x:.2f}")
             today_rates['Pick #'] = today_rates['valid_from'].map(cheapest_rank).fillna('')
             today_rates['Is Cheapest'] = today_rates['valid_from'].isin(cheapest_times)
             today_rates['Slot #'] = (
@@ -195,7 +195,7 @@ def rates_page():
 
             def format_slot(row):
                 if row['Is Cheapest']:
-                    return f"{row['Slot #']} {row['Pick #']} ⭐"
+                    return f"{row['Slot #']} ⭐ {row['Pick #']}"
                 return str(row['Slot #'])
 
             display_df['Slot #'] = display_df.apply(format_slot, axis=1)
@@ -236,7 +236,7 @@ def rates_page():
         if not tomorrow_rates.empty:
             # Format for display
             tomorrow_rates['Time'] = tomorrow_rates['valid_from'].dt.strftime('%H:%M')
-            tomorrow_rates['Rate (p/kWh)'] = tomorrow_rates['value_inc_vat'].round(2)
+            tomorrow_rates['Rate (p/kWh)'] = tomorrow_rates['value_inc_vat'].map(lambda x: f"{x:.2f}")
             
             # Select and rename columns for display
             display_df = tomorrow_rates[['Time', 'Rate (p/kWh)']].reset_index(drop=True)
