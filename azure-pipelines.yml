@@ -2,6 +2,7 @@
 # Build your Python project and deploy it to Azure as a Linux Web App.
 
 trigger:
+  - main
   - feature/gas-usage
 
 variables:
@@ -21,6 +22,9 @@ variables:
   projectRoot: $(System.DefaultWorkingDirectory)
 
   pythonVersion: '3.11'
+  
+  # Streamlit port
+  streamlitPort: '8000'
 
 stages:
   - stage: Build
@@ -78,3 +82,4 @@ stages:
                     azureSubscription: $(azureServiceConnectionName)
                     appName: $(webAppName)
                     package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+                    startUpCommand: 'startup.sh'
