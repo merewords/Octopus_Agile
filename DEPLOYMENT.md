@@ -90,7 +90,25 @@ https://<account>.snowflakecomputing.com/streamlit/OCTOPUS_ENERGY.APPS.AGILE_DAS
 
 ### Step 1: Install SnowSQL
 
-Download and install SnowSQL from the [Snowflake documentation](https://docs.snowflake.com/en/user-guide/snowsql-install-config).
+**For Linux (including dev containers):**
+
+```bash
+# Download the installer
+curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.32-linux_x86_64.bash
+
+# Make it executable and run
+chmod +x snowsql-1.2.32-linux_x86_64.bash
+bash snowsql-1.2.32-linux_x86_64.bash
+
+# Add to PATH permanently
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# Verify installation
+snowsql --version
+```
+
+**For other operating systems:** See the [Snowflake documentation](https://docs.snowflake.com/en/user-guide/snowsql-install-config).
 
 ### Step 2: Create Infrastructure
 

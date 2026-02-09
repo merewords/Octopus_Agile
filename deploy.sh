@@ -16,8 +16,8 @@ NC='\033[0m' # No Color
 
 # Configuration
 # Update these variables with your Snowflake connection details
-SNOWFLAKE_ACCOUNT=""
-SNOWFLAKE_USER=""
+SNOWFLAKE_ACCOUNT="znyskxr-KJ59114"
+SNOWFLAKE_USER="MEREWORDS"
 SNOWFLAKE_ROLE="ACCOUNTADMIN"  # Or your preferred role
 SNOWFLAKE_WAREHOUSE="STREAMLIT_WH"
 SNOWFLAKE_DATABASE="OCTOPUS_ENERGY"
