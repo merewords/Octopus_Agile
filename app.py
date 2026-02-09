@@ -151,7 +151,7 @@ def rates_page():
             use_container_width=True,
             hide_index=True,
             column_config={
-                "Slot #": st.column_config.NumberColumn("", width="small")
+                "Slot #": st.column_config.NumberColumn("Slot #", width="small")
             }
         )
         
@@ -175,7 +175,7 @@ def rates_page():
             cheapest_times = set(cheapest_slots['valid_from']) if not cheapest_slots.empty else set()
             cheapest_rank = {}
             if not cheapest_slots.empty:
-                sorted_cheapest = cheapest_slots.sort_values(by='value_inc_vat').reset_index(drop=True)
+                sorted_cheapest = cheapest_slots.sort_values(by='valid_from').reset_index(drop=True)
                 for idx, row in sorted_cheapest.iterrows():
                     cheapest_rank[row['valid_from']] = f"{idx + 1}/10"
 
@@ -183,22 +183,33 @@ def rates_page():
             today_rates['Time'] = today_rates['valid_from'].dt.strftime('%H:%M')
             today_rates['Rate (p/kWh)'] = today_rates['value_inc_vat'].round(2)
             today_rates['Pick #'] = today_rates['valid_from'].map(cheapest_rank).fillna('')
-            today_rates['Picked Cheapest'] = today_rates['valid_from'].isin(cheapest_times).map(
-                lambda is_cheapest: '⭐' if is_cheapest else ''
+            today_rates['Is Cheapest'] = today_rates['valid_from'].isin(cheapest_times)
+            today_rates['Slot #'] = (
+                today_rates['valid_from'].dt.hour * 2
+                + (today_rates['valid_from'].dt.minute // 30)
+                + 1
             )
             
             # Select and rename columns for display
-            display_df = today_rates[['Pick #', 'Picked Cheapest', 'Time', 'Rate (p/kWh)']].reset_index(drop=True)
+            display_df = today_rates[['Slot #', 'Pick #', 'Is Cheapest', 'Time', 'Rate (p/kWh)']].reset_index(drop=True)
+
+            def format_slot(row):
+                if row['Is Cheapest']:
+                    return f"{row['Slot #']} {row['Pick #']} ⭐"
+                return str(row['Slot #'])
+
+            display_df['Slot #'] = display_df.apply(format_slot, axis=1)
+            display_df = display_df[['Slot #', 'Time', 'Rate (p/kWh)']]
 
             def highlight_cheapest(row):
-                if row['Picked Cheapest'] == '⭐':
+                if '⭐' in row['Slot #']:
                     return ['background-color: rgba(144, 238, 144, 0.3); font-weight: bold'] * len(row)
                 return [''] * len(row)
 
             styled_df = (
                 display_df.style
                 .apply(highlight_cheapest, axis=1)
-                .set_properties(subset=['Pick #'], **{'white-space': 'nowrap', 'width': '1%'})
+                .set_properties(subset=['Slot #'], **{'white-space': 'nowrap', 'width': '1%'})
                 .set_table_styles([
                     {'selector': 'th.col0', 'props': [('white-space', 'nowrap'), ('width', '1%')]}
                 ])
@@ -210,7 +221,7 @@ def rates_page():
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "Pick #": st.column_config.TextColumn("", width="small")
+                    "Slot #": st.column_config.TextColumn("Slot #", width="small")
                 }
             )
         else:
