@@ -106,7 +106,7 @@ def create_rates_chart(tariff_df):
         )
 
         cheapest_slots = today_rates[valid_mask].nsmallest(10, 'value_inc_vat').copy()
-        cheapest_slots['period'] = 'All day'
+        cheapest_slots['period'] = '30 min'
     
     # Create marker colors based on time periods
     marker_colors = []

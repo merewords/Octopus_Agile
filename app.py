@@ -129,26 +129,36 @@ def rates_page():
         display_cheapest['Time'] = display_cheapest['time']
         display_cheapest['Period'] = display_cheapest['period']
         display_cheapest['Rate (p/kWh)'] = display_cheapest['value_inc_vat'].round(2)
+        # Map half-hour slots to 1-48 daily positions (00:00 is 1, 00:30 is 2, ...)
+        display_cheapest['Slot #'] = (
+            display_cheapest['valid_from'].dt.hour * 2
+            + (display_cheapest['valid_from'].dt.minute // 30)
+            + 1
+        )
         
         # Select and order columns for display
-        display_cheapest = display_cheapest[['Period', 'Time', 'Rate (p/kWh)']].reset_index(drop=True)
+        display_cheapest = display_cheapest[['Slot #', 'Period', 'Time', 'Rate (p/kWh)']].reset_index(drop=True)
         
         # Use different colors for each period
         def highlight_period(row):
-            if 'All day' in row['Period']:
+            if '30 min' in row['Period']:
                 return ['background-color: rgba(0, 128, 0, 0.2)'] * len(row)
             return [''] * len(row)
         
         # Display the styled table
         st.dataframe(
             display_cheapest.style.apply(highlight_period, axis=1),
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Slot #": st.column_config.NumberColumn("", width="small")
+            }
         )
         
         # Legend for the table and chart
         col1, = st.columns(1)
         with col1:
-            st.markdown("🟢 **All day (00:01-23:59)**")
+            st.markdown("🟢 **30 min (00:01-23:59)**")
     
     # Display the chart
     st.plotly_chart(fig, use_container_width=True)
@@ -200,7 +210,7 @@ def rates_page():
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "Pick #": st.column_config.TextColumn("Pick #", width="small")
+                    "Pick #": st.column_config.TextColumn("", width="small")
                 }
             )
         else:
