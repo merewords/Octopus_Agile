@@ -7,6 +7,11 @@
 
 set -e  # Exit on any error
 
+# Add SnowSQL to PATH if it exists in ~/bin
+if [ -d "$HOME/bin" ]; then
+    export PATH="$HOME/bin:$PATH"
+fi
+
 # ANSI Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -23,7 +28,7 @@ SNOWFLAKE_WAREHOUSE="STREAMLIT_WH"
 SNOWFLAKE_DATABASE="OCTOPUS_ENERGY"
 SNOWFLAKE_SCHEMA="APPS"
 SNOWFLAKE_STAGE="STREAMLIT_STAGE"
-CONNECTION_NAME=""  # SnowSQL connection name (from ~/.snowsql/config)
+CONNECTION_NAME="octopus"  # SnowSQL connection name (from ~/.snowsql/config)
 
 # Files to upload
 FILES=(
