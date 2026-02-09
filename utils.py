@@ -211,7 +211,15 @@ def create_rates_chart(tariff_df):
     
     return fig, cheapest_slots
 
-def create_combined_usage_cost_chart(consumption_df, cost_df=None):
+def create_combined_usage_cost_chart(
+    consumption_df,
+    cost_df=None,
+    title="Daily Electricity Consumption and Cost",
+    consumption_label="Consumption (kWh)",
+    cost_label="Total Cost (£)",
+    consumption_color="skyblue",
+    cost_color="red"
+):
     """
     Create a combined chart to display consumption data and costs.
     
@@ -234,9 +242,9 @@ def create_combined_usage_cost_chart(consumption_df, cost_df=None):
     fig.add_trace(go.Bar(
         x=daily_consumption['date'],
         y=daily_consumption['consumption'],
-        name='Consumption (kWh)',
-        marker_color='skyblue',
-        hovertemplate='Date: %{x}<br>Consumption: %{y:.2f} kWh<extra></extra>'
+        name=consumption_label,
+        marker_color=consumption_color,
+        hovertemplate=f'Date: %{{x}}<br>{consumption_label}: %{{y:.2f}} kWh<extra></extra>'
     ))
     
     # Add cost line if cost data is available
@@ -256,10 +264,10 @@ def create_combined_usage_cost_chart(consumption_df, cost_df=None):
             x=daily_costs['date'],
             y=daily_costs['total_cost'],
             mode='lines+markers',
-            name='Total Cost (£)',
-            line=dict(color='red', width=3),
+            name=cost_label,
+            line=dict(color=cost_color, width=3),
             marker=dict(size=8),
-            hovertemplate='Date: %{x}<br>Total Cost: £%{y:.2f}<extra></extra>',
+            hovertemplate=f'Date: %{{x}}<br>{cost_label}: £%{{y:.2f}}<extra></extra>',
             yaxis='y2'  # Use secondary y-axis
         ))
         
@@ -271,27 +279,27 @@ def create_combined_usage_cost_chart(consumption_df, cost_df=None):
                 text=f"£{row['total_cost']:.2f}",
                 yshift=10,
                 showarrow=False,
-                font=dict(size=10, color="red"),
+                font=dict(size=10, color=cost_color),
                 yref='y2'
             )
     
     # Configure the layout with dual y-axes
     fig.update_layout(
-        title='Daily Electricity Consumption and Cost',
+        title=title,
         xaxis_title='Date',
         yaxis=dict(
             title=dict(
-                text='Consumption (kWh)',
-                font=dict(color='skyblue')
+                text=consumption_label,
+                font=dict(color=consumption_color)
             ),
-            tickfont=dict(color='skyblue')
+            tickfont=dict(color=consumption_color)
         ),
         yaxis2=dict(
             title=dict(
-                text='Cost (£)',
-                font=dict(color='red')
+                text=cost_label,
+                font=dict(color=cost_color)
             ),
-            tickfont=dict(color='red'),
+            tickfont=dict(color=cost_color),
             anchor="x",
             overlaying="y",
             side="right",

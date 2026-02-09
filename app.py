@@ -36,6 +36,8 @@ st.markdown(
 api_key = os.environ.get('OCTOPUS_API_KEY', '')
 MPAN_key = os.environ.get('MPAN_KEY', '')
 meter_key = os.environ.get('METER_KEY', '')
+gas_mprn_key = os.environ.get('GAS_MPRN', '')
+gas_meter_key = os.environ.get('GAS_METER_SERIAL', '')
 
 # Initialize session state
 if 'api_key' not in st.session_state:
@@ -46,6 +48,14 @@ if 'meter_serial' not in st.session_state:
     st.session_state.meter_serial = meter_key  # Default from screenshot
 if 'standing_charge' not in st.session_state:
     st.session_state.standing_charge = 0.3954
+if 'gas_mprn' not in st.session_state:
+    st.session_state.gas_mprn = gas_mprn_key
+if 'gas_meter_serial' not in st.session_state:
+    st.session_state.gas_meter_serial = gas_meter_key
+if 'gas_unit_rate_default_p' not in st.session_state:
+    st.session_state.gas_unit_rate_default_p = 6.03
+if 'gas_standing_charge_default_p' not in st.session_state:
+    st.session_state.gas_standing_charge_default_p = 34.28
 if 'active_page' not in st.session_state:
     st.session_state.active_page = "Rates"
 if 'default_days' not in st.session_state:
@@ -67,7 +77,7 @@ def sidebar_inputs():
         
         # Navigation
         st.header("Navigation")
-        page = st.radio("Select Page", ["Rates", "DA5_1LW_Usage"])
+        page = st.radio("Select Page", ["Rates", "DA5_1LW_Usage", "Gas Usage"])
         
         # Only show meter inputs if on Usage page
         if page == "DA5_1LW_Usage":
@@ -88,13 +98,17 @@ def sidebar_inputs():
             
             # Update standing charge in session state
             st.session_state.standing_charge = standing_charge
-            
-            # Date range selector for usage page
+        elif page == "Gas Usage":
+            st.info(f"MPRN: {st.session_state.gas_mprn or 'Not set'}")
+            st.info(f"Gas Meter Serial: {st.session_state.gas_meter_serial or 'Not set'}")
+
+        if page in {"DA5_1LW_Usage", "Gas Usage"}:
+            # Date range selector for usage pages
             st.header("Date Range")
             default_days = st.slider(
-                "Days of History", 
-                min_value=7, 
-                max_value=90, 
+                "Days of History",
+                min_value=7,
+                max_value=90,
                 value=30,
                 help="Number of days of history to display"
             )
@@ -180,6 +194,50 @@ def rates_page():
     
     # Display the chart
     st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Gas Fixed Rate and Standing Charge")
+    if not st.session_state.gas_mprn:
+        st.warning("Please provide your gas MPRN to load gas rates.")
+    else:
+        with st.spinner("Fetching current gas rate and standing charge..."):
+            gas_rates_df = api.get_gas_tariff_rates(mprn=st.session_state.gas_mprn)
+            gas_standing_df = api.get_gas_standing_charges(mprn=st.session_state.gas_mprn)
+
+        uk_tz = pytz.timezone('Europe/London')
+        now = datetime.now(uk_tz)
+
+        def select_current_value(rate_df):
+            if rate_df.empty:
+                return None
+            current_row = rate_df[
+                (rate_df['valid_from'] <= now) & (rate_df['valid_to'] > now)
+            ]
+            if current_row.empty:
+                return None
+            return current_row.iloc[0]['value_inc_vat']
+
+        gas_unit_rate = select_current_value(gas_rates_df)
+        gas_standing = select_current_value(gas_standing_df)
+
+        fallback_used = False
+        if gas_unit_rate is None:
+            gas_unit_rate = st.session_state.gas_unit_rate_default_p
+            fallback_used = True
+
+        if gas_standing is None:
+            gas_standing = st.session_state.gas_standing_charge_default_p
+            fallback_used = True
+
+        gas_rate_table = pd.DataFrame(
+            [
+                {"Item": "Gas Unit Rate", "Value": f"{gas_unit_rate:.2f} p/kWh"},
+                {"Item": "Gas Standing Charge", "Value": f"{gas_standing:.2f} p/day"}
+            ]
+        )
+        st.dataframe(gas_rate_table, use_container_width=True, hide_index=True)
+
+        if fallback_used:
+            st.info("Showing fallback gas rates because the current API rate data was unavailable.")
     
     # Get timezone
     uk_tz = pytz.timezone('Europe/London')
@@ -412,6 +470,137 @@ def usage_page():
         st.warning("Cost data is not available. Unable to calculate costs without tariff information.")
 
 
+def gas_usage_page():
+    """Display the gas usage and cost page."""
+    st.title("Gas Usage and Cost History")
+
+    if not st.session_state.api_key:
+        st.warning("Please provide your Octopus Energy API key in the sidebar.")
+        return
+
+    if not st.session_state.gas_mprn or not st.session_state.gas_meter_serial:
+        st.warning("Please provide your gas MPRN and serial number in the sidebar.")
+        return
+
+    api = OctopusEnergyAPI(api_key=st.session_state.api_key)
+    default_days = st.session_state.default_days
+
+    to_date = datetime.now()
+    from_date = to_date - timedelta(days=default_days)
+
+    st.info(f"Showing data from {from_date.strftime('%d %b %Y')} to {to_date.strftime('%d %b %Y')}")
+
+    period_from = datetime.combine(from_date.date(), datetime.min.time())
+    period_to = datetime.combine(to_date.date(), datetime.max.time())
+
+    with st.spinner("Fetching your gas usage data..."):
+        consumption_df = api.get_gas_consumption_data(
+            mprn=st.session_state.gas_mprn,
+            serial_number=st.session_state.gas_meter_serial,
+            period_from=period_from,
+            period_to=period_to
+        )
+
+    if consumption_df.empty:
+        st.error("Failed to fetch gas consumption data. Please check your meter details and try again.")
+        return
+
+    cost_df = pd.DataFrame()
+    with st.spinner("Fetching gas rates for cost calculation..."):
+        gas_rates_df = api.get_gas_tariff_rates(
+            mprn=st.session_state.gas_mprn,
+            period_from=period_from,
+            period_to=period_to
+        )
+        gas_standing_df = api.get_gas_standing_charges(
+            mprn=st.session_state.gas_mprn,
+            period_from=period_from,
+            period_to=period_to
+        )
+
+    if gas_rates_df.empty or gas_standing_df.empty:
+        st.error("Failed to fetch gas tariff rates. Cost calculations will not be available.")
+    else:
+        uk_tz = pytz.timezone('Europe/London')
+        now = datetime.now(uk_tz)
+        current_standing = gas_standing_df[
+            (gas_standing_df['valid_from'] <= now) & (gas_standing_df['valid_to'] > now)
+        ]
+
+        if current_standing.empty:
+            standing_charge = st.session_state.gas_standing_charge_default_p / 100
+            st.info("Using fallback gas standing charge for cost calculations.")
+        else:
+            standing_charge = current_standing.iloc[0]['value_inc_vat'] / 100
+
+        cost_df = calculate_costs(
+            consumption_df,
+            gas_rates_df,
+            standing_charge=standing_charge
+        )
+
+    st.subheader("Gas Consumption and Cost")
+    combined_fig = create_combined_usage_cost_chart(
+        consumption_df,
+        cost_df,
+        title="Daily Gas Consumption and Cost",
+        consumption_label="Gas Consumption (kWh)",
+        cost_label="Total Cost (£)",
+        consumption_color="teal",
+        cost_color="darkorange"
+    )
+    st.plotly_chart(combined_fig, use_container_width=True)
+
+    if not cost_df.empty:
+        st.subheader("Monthly Usage Summary (Month-to-Date)")
+        month_start = datetime(to_date.year, to_date.month, 1).date()
+        mtd_cost_df = cost_df[cost_df['date'] >= month_start]
+        mtd_consumption = mtd_cost_df['consumption'].sum()
+        mtd_usage_cost = mtd_cost_df['cost'].sum()
+        mtd_standing = mtd_cost_df['standing_charge'].sum()
+        mtd_total = mtd_usage_cost + mtd_standing
+
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("MTD Consumption", f"{mtd_consumption:.2f} kWh")
+        with col2:
+            st.metric("MTD Usage Cost", f"£{mtd_usage_cost:.2f}")
+        with col3:
+            st.metric("MTD Standing Charges", f"£{mtd_standing:.2f}")
+        with col4:
+            st.metric("MTD Total Bill", f"£{mtd_total:.2f}")
+
+        st.subheader("Daily Totals")
+        daily_data = cost_df.groupby('date').agg({
+            'consumption': 'sum',
+            'cost': 'sum',
+            'standing_charge': 'sum'
+        }).reset_index()
+        daily_data['total_cost'] = daily_data['cost'] + daily_data['standing_charge']
+
+        display_df = daily_data.copy()
+        display_df['Date'] = display_df['date']
+        display_df['Consumption (kWh)'] = display_df['consumption'].round(2)
+        display_df['Usage Cost (£)'] = display_df['cost'].round(2)
+        display_df['Standing Charge (£)'] = display_df['standing_charge'].round(2)
+        display_df['Total Cost (£)'] = display_df['total_cost'].round(2)
+
+        display_df = display_df[[
+            'Date',
+            'Consumption (kWh)',
+            'Usage Cost (£)',
+            'Standing Charge (£)',
+            'Total Cost (£)'
+        ]].sort_values(by='Date', ascending=False)
+
+        st.dataframe(display_df, use_container_width=True)
+    else:
+        st.subheader("Usage Summary")
+        total_consumption = consumption_df['consumption'].sum()
+        st.metric("Total Consumption", f"{total_consumption:.2f} kWh")
+        st.warning("Cost data is not available. Unable to calculate costs without tariff information.")
+
+
 def main():
     """Main app function."""
     # Display sidebar
@@ -420,8 +609,10 @@ def main():
     # Display the active page
     if st.session_state.active_page == "Rates":
         rates_page()
-    else:
+    elif st.session_state.active_page == "DA5_1LW_Usage":
         usage_page()
+    else:
+        gas_usage_page()
 
 
 if __name__ == "__main__":
