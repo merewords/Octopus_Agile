@@ -1,0 +1,12 @@
+name: octopus_agile
+channels:
+  - snowflake
+  - conda-forge
+dependencies:
+  - python=3.10
+  - streamlit
+  - pandas
+  - pytz
+  - requests
+  - plotly
+  - snowflake-snowpark-python

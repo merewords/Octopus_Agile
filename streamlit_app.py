@@ -11,6 +11,7 @@ from utils import (
     create_cost_chart,
     create_combined_usage_cost_chart
 )
+from snowflake_cache import SnowflakeCache
 
 # Set page configuration
 st.set_page_config(
@@ -32,12 +33,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Get API key from environment variable
-api_key = os.environ.get('OCTOPUS_API_KEY', '')
-MPAN_key = os.environ.get('MPAN_KEY', '')
-meter_key = os.environ.get('METER_KEY', '')
-gas_mprn_key = os.environ.get('GAS_MPRN', '')
-gas_meter_key = os.environ.get('GAS_METER_SERIAL', '')
+# Get API key from Snowflake secrets (falls back to environment variables for local dev)
+api_key = st.secrets.get('OCTOPUS_API_KEY', os.environ.get('OCTOPUS_API_KEY', ''))
+MPAN_key = st.secrets.get('MPAN_KEY', os.environ.get('MPAN_KEY', ''))
+meter_key = st.secrets.get('METER_KEY', os.environ.get('METER_KEY', ''))
+gas_mprn_key = st.secrets.get('GAS_MPRN', os.environ.get('GAS_MPRN', ''))
+gas_meter_key = st.secrets.get('GAS_METER_SERIAL', os.environ.get('GAS_METER_SERIAL', ''))
 
 # Initialize session state
 if 'api_key' not in st.session_state:
@@ -131,13 +132,29 @@ def rates_page():
         st.warning("Please provide your Octopus Energy API key in the sidebar.")
         return
     
-    # Initialize API client
+    # Initialize API client and cache
     api = OctopusEnergyAPI(api_key=st.session_state.api_key)
+    cache = SnowflakeCache()
     
-    # Add a loading indicator
-    with st.spinner("Fetching latest Agile tariff rates..."):
-        # Fetch the tariff rates
-        tariff_df = api.get_agile_tariff_rates()
+    # Try to get cached data first
+    tariff_df = None
+    if cache.enabled:
+        with st.spinner("Checking cache for recent tariff rates..."):
+            tariff_df = cache.get_cached_tariff_rates(hours_old=6)
+            if tariff_df is not None and not tariff_df.empty:
+                st.success("✓ Loaded from Snowflake cache")
+    
+    # If no cached data, fetch from API
+    if tariff_df is None or tariff_df.empty:
+        # Add a loading indicator
+        with st.spinner("Fetching latest Agile tariff rates from API..."):
+            # Fetch the tariff rates
+            tariff_df = api.get_agile_tariff_rates()
+            
+            # Cache the results if Snowflake is available
+            if cache.enabled and not tariff_df.empty:
+                cache.cache_tariff_rates(tariff_df)
+                st.info("📦 Cached to Snowflake for faster future access")
     
     if tariff_df.empty:
         st.error("Failed to fetch tariff rates. Please check your API key and try again.")
@@ -347,8 +364,9 @@ def usage_page():
         st.warning("Please provide your electricity meter MPAN and serial number in the sidebar.")
         return
     
-    # Initialize API client
+    # Initialize API client and cache
     api = OctopusEnergyAPI(api_key=st.session_state.api_key)
+    cache = SnowflakeCache()
     
     # Use date range from sidebar
     default_days = st.session_state.default_days
@@ -364,15 +382,38 @@ def usage_page():
     period_from = datetime.combine(from_date.date(), datetime.min.time())
     period_to = datetime.combine(to_date.date(), datetime.max.time())
     
-    # Add a loading indicator
-    with st.spinner("Fetching your electricity usage data..."):
-        # Fetch consumption data
-        consumption_df = api.get_consumption_data(
-            mpan=st.session_state.mpan,
-            serial_number=st.session_state.meter_serial,
-            period_from=period_from,
-            period_to=period_to
-        )
+    # Try to get cached consumption data first
+    consumption_df = None
+    if cache.enabled:
+        with st.spinner("Checking cache for consumption data..."):
+            consumption_df = cache.get_cached_consumption(
+                st.session_state.mpan,
+                st.session_state.meter_serial,
+                days_old=1
+            )
+            if consumption_df is not None and not consumption_df.empty:
+                st.success("✓ Loaded consumption from Snowflake cache")
+    
+    # If no cached data, fetch from API
+    if consumption_df is None or consumption_df.empty:
+        # Add a loading indicator
+        with st.spinner("Fetching your electricity usage data from API..."):
+            # Fetch consumption data
+            consumption_df = api.get_consumption_data(
+                mpan=st.session_state.mpan,
+                serial_number=st.session_state.meter_serial,
+                period_from=period_from,
+                period_to=period_to
+            )
+            
+            # Cache the results
+            if cache.enabled and not consumption_df.empty:
+                cache.cache_consumption(
+                    consumption_df,
+                    st.session_state.mpan,
+                    st.session_state.meter_serial
+                )
+                st.info("📦 Cached consumption to Snowflake")
     
     if consumption_df.empty:
         st.error("Failed to fetch consumption data. Please check your meter details and try again.")
@@ -483,6 +524,7 @@ def gas_usage_page():
         return
 
     api = OctopusEnergyAPI(api_key=st.session_state.api_key)
+    cache = SnowflakeCache()
     default_days = st.session_state.default_days
 
     to_date = datetime.now()
@@ -493,13 +535,36 @@ def gas_usage_page():
     period_from = datetime.combine(from_date.date(), datetime.min.time())
     period_to = datetime.combine(to_date.date(), datetime.max.time())
 
-    with st.spinner("Fetching your gas usage data..."):
-        consumption_df = api.get_gas_consumption_data(
-            mprn=st.session_state.gas_mprn,
-            serial_number=st.session_state.gas_meter_serial,
-            period_from=period_from,
-            period_to=period_to
-        )
+    # Try to get cached gas consumption data first
+    consumption_df = None
+    if cache.enabled:
+        with st.spinner("Checking cache for gas consumption data..."):
+            consumption_df = cache.get_cached_gas_consumption(
+                st.session_state.gas_mprn,
+                st.session_state.gas_meter_serial,
+                days_old=1
+            )
+            if consumption_df is not None and not consumption_df.empty:
+                st.success("✓ Loaded gas consumption from Snowflake cache")
+    
+    # If no cached data, fetch from API
+    if consumption_df is None or consumption_df.empty:
+        with st.spinner("Fetching your gas usage data from API..."):
+            consumption_df = api.get_gas_consumption_data(
+                mprn=st.session_state.gas_mprn,
+                serial_number=st.session_state.gas_meter_serial,
+                period_from=period_from,
+                period_to=period_to
+            )
+            
+            # Cache the results
+            if cache.enabled and not consumption_df.empty:
+                cache.cache_gas_consumption(
+                    consumption_df,
+                    st.session_state.gas_mprn,
+                    st.session_state.gas_meter_serial
+                )
+                st.info("📦 Cached gas consumption to Snowflake")
 
     if consumption_df.empty:
         st.error("Failed to fetch gas consumption data. Please check your meter details and try again.")
