@@ -128,7 +128,7 @@ def rates_page():
         display_cheapest = cheapest_slots.copy()
         display_cheapest['Time'] = display_cheapest['time']
         display_cheapest['Period'] = display_cheapest['period']
-        display_cheapest['Rate (p/kWh)'] = display_cheapest['value_inc_vat'].map(lambda x: f"{x:.2f}")
+        display_cheapest['Rate (p/kWh)'] = display_cheapest['value_inc_vat'].map(lambda x: f"{x:.2f}p")
         # Map half-hour slots to 1-48 daily positions (00:00 is 1, 00:30 is 2, ...)
         display_cheapest['Slot #'] = (
             display_cheapest['valid_from'].dt.hour * 2
@@ -151,7 +151,8 @@ def rates_page():
             .apply(highlight_period, axis=1)
             .set_properties(**{'text-align': 'center'})
             .set_table_styles([
-                {'selector': 'th', 'props': [('text-align', 'center')]}
+                {'selector': 'th', 'props': [('text-align', 'center')]},
+                {'selector': 'td', 'props': [('text-align', 'center')]}
             ]),
             use_container_width=True,
             hide_index=True,
@@ -186,7 +187,7 @@ def rates_page():
 
             # Format for display
             today_rates['Time'] = today_rates['valid_from'].dt.strftime('%H:%M')
-            today_rates['Rate (p/kWh)'] = today_rates['value_inc_vat'].map(lambda x: f"{x:.2f}")
+            today_rates['Rate (p/kWh)'] = today_rates['value_inc_vat'].map(lambda x: f"{x:.2f}p")
             today_rates['Pick #'] = today_rates['valid_from'].map(cheapest_rank).fillna('')
             today_rates['Is Cheapest'] = today_rates['valid_from'].isin(cheapest_times)
             today_rates['Slot #'] = (
@@ -218,7 +219,8 @@ def rates_page():
                 .set_properties(**{'text-align': 'center'})
                 .set_table_styles([
                     {'selector': 'th.col0', 'props': [('white-space', 'nowrap'), ('width', '1%')]},
-                    {'selector': 'th', 'props': [('text-align', 'center')]}
+                    {'selector': 'th', 'props': [('text-align', 'center')]},
+                    {'selector': 'td', 'props': [('text-align', 'center')]}
                 ])
             )
 
@@ -243,7 +245,7 @@ def rates_page():
         if not tomorrow_rates.empty:
             # Format for display
             tomorrow_rates['Time'] = tomorrow_rates['valid_from'].dt.strftime('%H:%M')
-            tomorrow_rates['Rate (p/kWh)'] = tomorrow_rates['value_inc_vat'].map(lambda x: f"{x:.2f}")
+            tomorrow_rates['Rate (p/kWh)'] = tomorrow_rates['value_inc_vat'].map(lambda x: f"{x:.2f}p")
             
             # Select and rename columns for display
             display_df = tomorrow_rates[['Time', 'Rate (p/kWh)']].reset_index(drop=True)
@@ -253,7 +255,8 @@ def rates_page():
                 display_df.style
                 .set_properties(**{'text-align': 'center'})
                 .set_table_styles([
-                    {'selector': 'th', 'props': [('text-align', 'center')]}
+                    {'selector': 'th', 'props': [('text-align', 'center')]},
+                    {'selector': 'td', 'props': [('text-align', 'center')]}
                 ]),
                 use_container_width=True
             )
